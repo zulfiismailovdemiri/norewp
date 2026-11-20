@@ -1,0 +1,4 @@
+#!/bin/sh
+# WP-CLI for this project: more memory, no PHP 8.5 deprecation noise, --path preset.
+# Use: noredock compose exec wp bin/wp plugin list
+exec php -d memory_limit=512M -d error_reporting=24575 "$(command -v wp)" --path="$(dirname "$0")/../wordpress" "$@"

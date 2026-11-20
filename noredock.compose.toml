@@ -1,0 +1,28 @@
+# norewp - WordPress (de_DE) on noredock.   Start: noredock compose up
+# Needs noredock >= 1.5 (php, wp-cli and mailpit images).
+name = "norewp"
+
+# Mailpit catches every e-mail WordPress sends (inbox: see `noredock compose ps`, default :8025)
+[services.mail]
+runtime = "mailpit"
+image = "mailpit:1.34.0"
+isolation = "sandbox"
+network = "local"
+
+# WordPress on PHP's built-in web server, database: SQLite (in the noredock volume)
+[services.wp]
+image = ["php:8.5.8", "wp-cli:2.12.0"]
+port = 8200
+host = "127.0.0.1"
+prepare = "sh bin/setup.sh"          # downloads + installs WordPress on the first start
+command = "php -d memory_limit=256M -d upload_max_filesize=64M -d post_max_size=64M -S {host}:{port} -t wordpress config/router.php"
+healthcheck = "/wp-login.php"
+ready_timeout = 120
+depends_on = ["mail"]
+env_file = ".env"                    # admin login, site title (copy from .env.example)
+isolation = "sandbox"                # no access to the rest of your home folder
+network = "all"                      # WordPress may load updates, plugins and themes
+
+[services.wp.env]
+SMTP_HOST = "${mail.host}"
+SMTP_PORT = "${mail.ports.smtp}"
